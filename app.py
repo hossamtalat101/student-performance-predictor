@@ -1,12 +1,8 @@
 """
 نظام التنبؤ الذكي بأداء الطلاب - تصميم احترافي
 تحويل من Gradio إلى Streamlit
-إصدار رسمي بنظام ألوان البترولي والذهبي
 """
 
-# ============================================================================
-# 1. استيراد مكتبات Streamlit
-# ============================================================================
 import streamlit as st
 import pandas as pd
 import joblib
@@ -15,7 +11,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import warnings
 from pathlib import Path
-import base64
 from datetime import datetime
 warnings.filterwarnings('ignore')
 
@@ -23,7 +18,6 @@ warnings.filterwarnings('ignore')
 # 2. تهيئة الثوابت والإعدادات
 # ============================================================================
 class DesignConfig:
-    # الألوان الأساسية
     COLORS = {
         'petroleum': '#006666',
         'petroleum_light': '#008787',
@@ -38,39 +32,15 @@ class DesignConfig:
         'success': '#28A745',
         'warning': '#FFC107',
         'danger': '#DC3545',
-        'info': '#17A2B8'
-    }
-    
-    # الظلال
-    SHADOWS = {
-        'small': '0 2px 4px rgba(0,0,0,0.1)',
-        'medium': '0 4px 8px rgba(0,0,0,0.12)',
-        'large': '0 8px 16px rgba(0,0,0,0.15)',
-        'xl': '0 12px 24px rgba(0,0,0,0.18)'
-    }
-    
-    # الزوايا
-    BORDER_RADIUS = {
-        'small': '8px',
-        'medium': '12px',
-        'large': '16px',
-        'xl': '24px'
+        'info': '#17A2B8',
+        'text': '#212529',  # لون النصوص الأساسي
+        'text_secondary': '#6C757D',  # لون النصوص الثانوي
     }
 
 # ============================================================================
-# 3. وظائف المساعدة
+# 3. تطبيق CSS محسن مع إصلاح النصوص البيضاء
 # ============================================================================
-def setup_page_config():
-    """إعداد إعدادات الصفحة"""
-    st.set_page_config(
-        page_title="نظام التنبؤ الذكي بأداء الطلاب",
-        page_icon="🎓",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
-
 def apply_custom_css():
-    """تطبيق CSS مخصص"""
     css = f"""
     <style>
     /* إعدادات عامة */
@@ -81,117 +51,174 @@ def apply_custom_css():
         text-align: right;
     }}
     
-    /* البطاقات */
-    .custom-card {{
-        background: {DesignConfig.COLORS['white']};
-        border-radius: {DesignConfig.BORDER_RADIUS['large']};
-        box-shadow: {DesignConfig.SHADOWS['medium']};
-        padding: 25px;
-        margin: 15px 0;
-        border: 1px solid {DesignConfig.COLORS['gray_medium']};
-        border-right: 5px solid {DesignConfig.COLORS['gold']};
-        transition: all 0.3s ease;
+    /* إصلاح: إظهار جميع النصوص باللون الداكن */
+    * {{
+        color: {DesignConfig.COLORS['text']} !important;
     }}
     
-    .custom-card:hover {{
-        box-shadow: {DesignConfig.SHADOWS['xl']};
-        border-color: {DesignConfig.COLORS['petroleum_light']};
-        transform: translateY(-2px);
+    .stMarkdown, .stText, .stTitle, .stHeader, .stSubheader {{
+        color: {DesignConfig.COLORS['text']} !important;
+    }}
+    
+    .stMarkdown p, .stMarkdown li, .stMarkdown span {{
+        color: {DesignConfig.COLORS['text']} !important;
+    }}
+    
+    /* عناصر Streamlit الافتراضية */
+    .css-1d391kg, .css-12oz5g7, .css-1v0mbdj {{
+        color: {DesignConfig.COLORS['text']} !important;
     }}
     
     /* العناوين */
-    .main-title {{
-        color: {DesignConfig.COLORS['petroleum_dark']};
-        text-align: center;
-        padding: 20px;
+    h1, h2, h3, h4, h5, h6 {{
+        color: {DesignConfig.COLORS['petroleum_dark']} !important;
+        font-weight: 700 !important;
+    }}
+    
+    /* الهيدر الرئيسي */
+    .main-header {{
         background: linear-gradient(135deg, {DesignConfig.COLORS['petroleum_dark']} 0%, {DesignConfig.COLORS['petroleum']} 100%);
-        border-radius: {DesignConfig.BORDER_RADIUS['large']};
-        color: white;
-        margin-bottom: 30px;
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: {DesignConfig.COLORS['white']} !important;
     }}
     
-    .section-title {{
-        color: {DesignConfig.COLORS['petroleum_dark']};
-        border-bottom: 2px solid {DesignConfig.COLORS['gold']};
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-        position: relative;
+    .main-header h1, .main-header p {{
+        color: {DesignConfig.COLORS['white']} !important;
     }}
     
-    .section-title::after {{
-        content: '';
-        position: absolute;
-        bottom: -2px;
-        right: 0;
-        width: 60px;
-        height: 2px;
-        background: {DesignConfig.COLORS['petroleum']};
+    /* البطاقات */
+    .custom-card {{
+        background: {DesignConfig.COLORS['white']};
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-right: 5px solid {DesignConfig.COLORS['gold']};
     }}
     
-    /* الأزرار */
+    /* أزرار */
     .stButton > button {{
         background: linear-gradient(135deg, {DesignConfig.COLORS['petroleum']} 0%, {DesignConfig.COLORS['petroleum_dark']} 100%);
-        color: {DesignConfig.COLORS['white']};
+        color: {DesignConfig.COLORS['white']} !important;
         border: none;
-        border-radius: {DesignConfig.BORDER_RADIUS['medium']};
-        padding: 12px 24px;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1.5rem;
         font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: {DesignConfig.SHADOWS['small']};
     }}
     
     .stButton > button:hover {{
-        box-shadow: {DesignConfig.SHADOWS['medium']};
-        color: {DesignConfig.COLORS['gold_light']};
+        box-shadow: 0 4px 12px rgba(0,102,102,0.3);
         transform: translateY(-2px);
     }}
     
-    /* أدوات الإدخال */
+    /* حقول الإدخال */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stSelectbox > div > div > select,
+    .stSlider > div > div {{
+        color: {DesignConfig.COLORS['text']} !important;
+        background-color: {DesignConfig.COLORS['white']} !important;
+        border-color: {DesignConfig.COLORS['gray_medium']} !important;
+    }}
+    
     .stSlider > div > div > div {{
-        background: {DesignConfig.COLORS['gold']};
-    }}
-    
-    /* المؤشرات */
-    .metric-card {{
-        background: linear-gradient(135deg, {DesignConfig.COLORS['gold']}15, {DesignConfig.COLORS['petroleum']}15);
-        border-radius: {DesignConfig.BORDER_RADIUS['medium']};
-        padding: 20px;
-        text-align: center;
-        border: 1px solid {DesignConfig.COLORS['gold']}30;
-    }}
-    
-    /* التنبيهات */
-    .alert-box {{
-        background: linear-gradient(135deg, {DesignConfig.COLORS['info']}15, {DesignConfig.COLORS['petroleum']}15);
-        border: 1px solid {DesignConfig.COLORS['info']}30;
-        border-radius: {DesignConfig.BORDER_RADIUS['medium']};
-        padding: 20px;
-        margin: 15px 0;
+        background: {DesignConfig.COLORS['gold']} !important;
     }}
     
     /* العلامات */
     .badge {{
         background: linear-gradient(135deg, {DesignConfig.COLORS['gold']}15, {DesignConfig.COLORS['petroleum']}15);
-        color: {DesignConfig.COLORS['petroleum_dark']};
-        padding: 8px 16px;
-        border-radius: {DesignConfig.BORDER_RADIUS['small']};
+        color: {DesignConfig.COLORS['petroleum_dark']} !important;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
         display: inline-block;
-        margin: 5px;
-        border: 1px solid {DesignConfig.COLORS['gold']}30;
+        margin: 0.25rem;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+    }}
+    
+    /* التنبيهات */
+    .alert-box {{
+        background: linear-gradient(135deg, {DesignConfig.COLORS['info']}15, {DesignConfig.COLORS['petroleum']}15);
+        border: 1px solid rgba(23, 162, 184, 0.3);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin: 1rem 0;
     }}
     
     /* الفوتر */
     .footer {{
         background: linear-gradient(135deg, {DesignConfig.COLORS['petroleum_dark']} 0%, {DesignConfig.COLORS['petroleum']} 100%);
-        padding: 20px;
-        border-radius: {DesignConfig.BORDER_RADIUS['large']};
-        color: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-top: 3rem;
         text-align: center;
-        margin-top: 40px;
+        color: {DesignConfig.COLORS['white']} !important;
+    }}
+    
+    .footer p, .footer span {{
+        color: {DesignConfig.COLORS['white']} !important;
+    }}
+    
+    /* علامات التبويب */
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 2rem;
+    }}
+    
+    .stTabs [data-baseweb="tab"] {{
+        color: {DesignConfig.COLORS['text_secondary']} !important;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }}
+    
+    .stTabs [aria-selected="true"] {{
+        color: {DesignConfig.COLORS['petroleum']} !important;
+        border-bottom: 3px solid {DesignConfig.COLORS['gold']} !important;
+    }}
+    
+    /* المخططات */
+    .stDataFrame, .stTable {{
+        color: {DesignConfig.COLORS['text']} !important;
+    }}
+    
+    /* الشريط الجانبي */
+    section[data-testid="stSidebar"] {{
+        background: {DesignConfig.COLORS['white']} !important;
+        color: {DesignConfig.COLORS['text']} !important;
+    }}
+    
+    section[data-testid="stSidebar"] * {{
+        color: {DesignConfig.COLORS['text']} !important;
+    }}
+    
+    /* النصوص الصغيرة */
+    small {{
+        color: {DesignConfig.COLORS['text_secondary']} !important;
+    }}
+    
+    /* الروابط */
+    a {{
+        color: {DesignConfig.COLORS['petroleum']} !important;
+    }}
+    
+    a:hover {{
+        color: {DesignConfig.COLORS['petroleum_dark']} !important;
     }}
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
+
+# ============================================================================
+# 4. وظائف المساعدة
+# ============================================================================
+def setup_page_config():
+    """إعداد إعدادات الصفحة"""
+    st.set_page_config(
+        page_title="نظام التنبؤ الذكي بأداء الطلاب",
+        page_icon="🎓",
+        layout="wide"
+    )
 
 def build_gauge(score, color):
     """بناء مؤشر سرعومتر أنيق"""
@@ -211,7 +238,7 @@ def build_gauge(score, color):
         <div style="position: absolute; width: 70%; height: 70%; 
              background: {DesignConfig.COLORS['white']}; 
              border-radius: 50%; top: 15%; left: 15%;
-             box-shadow: inset {DesignConfig.SHADOWS['medium']};">
+             box-shadow: inset 0 4px 8px rgba(0,0,0,0.1);">
         </div>
         <div style="position: absolute; bottom: 0; left: 50%; 
              width: 4px; height: 70%; background: {color};
@@ -220,7 +247,7 @@ def build_gauge(score, color):
         </div>
         <div style="position: absolute; bottom: 40%; left: 50%; 
              transform: translateX(-50%); font-size: 2.5em; 
-             font-weight: 700; color: {DesignConfig.COLORS['petroleum_dark']};">
+             font-weight: 700; color: {DesignConfig.COLORS['text']};">
              {score}
         </div>
     </div>
@@ -229,57 +256,92 @@ def build_gauge(score, color):
         <div style="text-align: center;">
             <div style="width: 15px; height: 15px; background: {DesignConfig.COLORS['danger']}; 
                  border-radius: 50%; display: inline-block; margin-left: 5px;"></div>
-            <span style="color: {DesignConfig.COLORS['gray_dark']};">ضعيف</span>
+            <span style="color: {DesignConfig.COLORS['text_secondary']};">ضعيف</span>
         </div>
         <div style="text-align: center;">
             <div style="width: 15px; height: 15px; background: {DesignConfig.COLORS['warning']}; 
                  border-radius: 50%; display: inline-block; margin-left: 5px;"></div>
-            <span style="color: {DesignConfig.COLORS['gray_dark']};">جيد</span>
+            <span style="color: {DesignConfig.COLORS['text_secondary']};">جيد</span>
         </div>
         <div style="text-align: center;">
             <div style="width: 15px; height: 15px; background: {DesignConfig.COLORS['success']}; 
                  border-radius: 50%; display: inline-block; margin-left: 5px;"></div>
-            <span style="color: {DesignConfig.COLORS['gray_dark']};">ممتاز</span>
+            <span style="color: {DesignConfig.COLORS['text_secondary']};">ممتاز</span>
         </div>
     </div>
     """
-    
     return gauge_html
 
 # ============================================================================
-# 4. بناء الواجهة
+# 5. بناء الواجهة الأساسية
 # ============================================================================
 def build_header():
     """بناء الهيدر الرئيسي"""
     st.markdown("""
-    <div class="main-title">
-        <h1 style="margin: 0; padding: 10px;">🎓 نظام التنبؤ الذكي بأداء الطلاب</h1>
-        <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 1.1em;">
-        حل متكامل للتنبؤ الأكاديمي وتحليل البيانات التعليمية باستخدام أحدث التقنيات
-        </p>
+    <div class="main-header">
+        <h1>🎓 نظام التنبؤ الذكي بأداء الطلاب</h1>
+        <p>حل متكامل للتنبؤ الأكاديمي وتحليل البيانات التعليمية</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def create_navigation():
+    """شريط التنقل الجانبي"""
+    st.sidebar.markdown("""
+    <div style="text-align: center; padding: 1rem; 
+         background: linear-gradient(135deg, #004d4d 0%, #006666 100%);
+         border-radius: 0.75rem; color: white; margin-bottom: 2rem;">
+        <h3 style="margin: 0;">🎓</h3>
+        <p style="margin: 0.5rem 0 0 0;">نظام التنبؤ الذكي</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # العلامات المميزة
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown('<span class="badge">تحليل تنبؤي</span>', unsafe_allow_html=True)
-    with col2:
-        st.markdown('<span class="badge">تعلم آلي</span>', unsafe_allow_html=True)
-    with col3:
-        st.markdown('<span class="badge">تحليل بيانات</span>', unsafe_allow_html=True)
-    with col4:
-        st.markdown('<span class="badge">تقارير تفاعلية</span>', unsafe_allow_html=True)
+    return st.sidebar.radio(
+        "🔍 التنقل",
+        ["🏠 الرئيسية", "🎯 أداة التنبؤ", "📈 تحليل البيانات", "📋 التقارير"],
+        index=0
+    )
 
-def build_prediction_section():
-    """بناء قسم التنبؤ"""
-    st.markdown('<h2 class="section-title">🎯 أداة التنبؤ الذكي بالدرجات</h2>', unsafe_allow_html=True)
-    st.markdown("""
-    أدخل البيانات المطلوبة للتنبؤ بالأداء الأكاديمي للطالب.
-    النظام سيقوم بتحليل المعلومات وتقديم تنبؤ دقيق مع توصيات مخصصة.
-    """)
+# ============================================================================
+# 6. الصفحات الرئيسية
+# ============================================================================
+def show_home_page():
+    """الصفحة الرئيسية"""
+    st.markdown('<div class="custom-card"><h2>🏠 نظرة عامة على النظام</h2></div>', unsafe_allow_html=True)
     
-    # استخدام علامات تبويب Streamlit
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        <div class="custom-card">
+            <h4>🎯 المميزات الرئيسية</h4>
+            <ul>
+                <li>تنبؤ دقيق بالأداء الأكاديمي</li>
+                <li>تحليل بيانات متقدم</li>
+                <li>توصيات مخصصة للطلاب</li>
+                <li>تقارير تفاعلية</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="custom-card">
+            <h4>📊 كيفية الاستخدام</h4>
+            <ol>
+                <li>اختر "أداة التنبؤ" من القائمة</li>
+                <li>أدخل بيانات الطالب</li>
+                <li>اضغط على "بدء التنبؤ"</li>
+                <li>استعرض النتائج والتوصيات</li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
+
+def show_prediction_page():
+    """صفحة التنبؤ"""
+    st.markdown('<h2 style="color: #004d4d; border-bottom: 2px solid #D4AF37; padding-bottom: 10px;">🎯 أداة التنبؤ الذكي بالدرجات</h2>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="alert-box"><p>أدخل البيانات المطلوبة للتنبؤ بالأداء الأكاديمي للطالب</p></div>', unsafe_allow_html=True)
+    
+    # علامات التبويب
     tab1, tab2, tab3 = st.tabs(["📊 إدخال البيانات", "📈 النتائج", "📋 التوصيات"])
     
     with tab1:
@@ -301,14 +363,6 @@ def build_prediction_section():
                 value=85,
                 help="نسبة حضور الطالب في المحاضرات والأنشطة التعليمية"
             )
-            
-            tutoring_sessions = st.slider(
-                "جلسات الدروس الخصوصية",
-                min_value=0,
-                max_value=10,
-                value=2,
-                help="عدد جلسات الدعم الإضافية الأسبوعية"
-            )
         
         with col2:
             previous_scores = st.number_input(
@@ -319,135 +373,88 @@ def build_prediction_section():
                 help="متوسط أداء الطالب في الاختبارات السابقة"
             )
             
-            peer_influence = st.select_slider(
-                "تأثير المحيط الدراسي",
-                options=[1, 2, 3, 4, 5],
-                value=3,
-                help="مدى تأثير البيئة الدراسية والأقران على أداء الطالب (1 = ضعيف، 5 = قوي)"
+            tutoring_sessions = st.slider(
+                "جلسات الدروس الخصوصية",
+                min_value=0,
+                max_value=10,
+                value=2,
+                help="عدد جلسات الدعم الإضافية الأسبوعية"
             )
-            
-            # أزرار التحكم
-            col_btn1, col_btn2 = st.columns(2)
-            with col_btn1:
-                if st.button("🔄 إعادة تعيين", use_container_width=True):
-                    st.session_state.clear()
-                    st.rerun()
-            
-            with col_btn2:
-                predict_clicked = st.button("🚀 بدء التنبؤ", type="primary", use_container_width=True)
+        
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("🔄 إعادة تعيين", use_container_width=True):
+                st.session_state.clear()
+        
+        with col_btn2:
+            predict_clicked = st.button("🚀 بدء التنبؤ", type="primary", use_container_width=True)
     
     with tab2:
         if 'prediction_result' in st.session_state:
-            display_prediction_result()
+            result = st.session_state.prediction_result
+            st.markdown(f"""
+            <div class="custom-card">
+                <h3>📊 النتيجة التفصيلية</h3>
+                <div style="text-align: center;">
+                    {build_gauge(result['score'], result['color'])}
+                </div>
+                <div style="display: flex; justify-content: space-around; margin: 20px 0;">
+                    <div>
+                        <p style="color: #6C757D;">الدرجة النهائية</p>
+                        <h3 style="color: {result['color']};">{result['score']}/100</h3>
+                    </div>
+                    <div>
+                        <p style="color: #6C757D;">التقييم</p>
+                        <h3 style="color: {result['color']};">{result['grade']}</h3>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             st.info("⏳ أدخل البيانات واضغط على 'بدء التنبؤ' لرؤية النتائج")
     
     with tab3:
         if 'prediction_result' in st.session_state:
-            display_recommendations()
+            result = st.session_state.prediction_result
+            st.markdown(f"""
+            <div class="custom-card">
+                <h3>📝 التوصيات</h3>
+                <div class="alert-box">
+                    <h4 style="color: {result['color']};">{result['feedback']}</h4>
+                    <ul>
+                        <li>زيادة ساعات الدراسة المنتظمة</li>
+                        <li>تحسين نسبة الحضور</li>
+                        <li>التركيز على المواد الضعيفة</li>
+                        <li>الاستفادة من جلسات الدعم</li>
+                    </ul>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             st.info("⏳ انتظر نتائج التنبؤ لرؤية التوصيات المخصصة")
     
-    return hours_studied, attendance_rate, tutoring_sessions, previous_scores, peer_influence, predict_clicked
+    return hours_studied, attendance_rate, previous_scores, tutoring_sessions, predict_clicked
 
-def display_prediction_result():
-    """عرض نتائج التنبؤ"""
-    result = st.session_state.prediction_result
+def show_analysis_page():
+    """صفحة تحليل البيانات"""
+    st.markdown('<h2 style="color: #004d4d; border-bottom: 2px solid #D4AF37; padding-bottom: 10px;">📈 محلل البيانات المتقدم</h2>', unsafe_allow_html=True)
     
-    st.markdown(f"""
-    <div class="custom-card">
-        <h3 style="color: {DesignConfig.COLORS['petroleum_dark']}; text-align: center;">
-        📊 النتيجة التفصيلية
-        </h3>
-        
-        <div style="text-align: center; margin: 30px 0;">
-            {build_gauge(result['score'], result['color'])}
-        </div>
-        
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0;">
-            <div class="metric-card">
-                <div style="color: {DesignConfig.COLORS['gray_dark']};">الدرجة النهائية</div>
-                <div style="color: {result['color']}; font-size: 2em; font-weight: bold;">
-                    {result['score']}/100
-                </div>
-            </div>
-            
-            <div class="metric-card">
-                <div style="color: {DesignConfig.COLORS['gray_dark']};">التقييم</div>
-                <div style="color: {result['color']}; font-size: 1.5em; font-weight: bold;">
-                    {result['grade']}
-                </div>
-            </div>
-            
-            <div class="metric-card">
-                <div style="color: {DesignConfig.COLORS['gray_dark']};">النسبة المئوية</div>
-                <div style="color: {result['color']}; font-size: 1.5em; font-weight: bold;">
-                    {result['score']}%
-                </div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def display_recommendations():
-    """عرض التوصيات"""
-    result = st.session_state.prediction_result
-    
-    st.markdown(f"""
-    <div class="custom-card">
-        <h3 style="color: {DesignConfig.COLORS['petroleum_dark']};">📝 التقييم والتوصيات</h3>
-        <div class="alert-box">
-            <h4 style="color: {result['color']}; margin-bottom: 10px;">{result['feedback']}</h4>
-            
-            <div style="background: {DesignConfig.COLORS['white']}; 
-                 padding: 15px; border-radius: {DesignConfig.BORDER_RADIUS['medium']}; 
-                 margin: 15px 0; border-right: 3px solid {result['color']};">
-                <h5>🎯 توصيات للتحسين:</h5>
-                <ul style="padding-right: 20px;">
-                    <li>زيادة ساعات الدراسة الأسبوعية</li>
-                    <li>التركيز على المواد التي تحتاج تحسين</li>
-                    <li>المشاركة في جلسات الدعم الإضافية</li>
-                    <li>تحسين نسبة الحضور</li>
-                </ul>
-            </div>
-        </div>
-        
-        <h4 style="color: {DesignConfig.COLORS['petroleum_dark']}; margin-top: 20px;">
-        📋 العوامل المدخلة
-        </h4>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <span class="badge">ساعات الدراسة: {st.session_state.hours}</span>
-            <span class="badge">الحضور: {st.session_state.attendance}%</span>
-            <span class="badge">درجات سابقة: {st.session_state.prev_scores}</span>
-            <span class="badge">دروس خصوصية: {st.session_state.tutoring}</span>
-            <span class="badge">تأثير الأقران: {st.session_state.peer_influence}/5</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-def build_analysis_section():
-    """بناء قسم تحليل البيانات"""
-    st.markdown('<h2 class="section-title">📈 محلل البيانات المتقدم</h2>', unsafe_allow_html=True)
-    
-    uploaded_file = st.file_uploader("رفع ملف بيانات (CSV)", type=['csv'])
+    uploaded_file = st.file_uploader("📁 رفع ملف بيانات (CSV)", type=['csv'])
     
     if uploaded_file is not None:
         try:
             df = pd.read_csv(uploaded_file)
             
-            # معلومات الملف
             st.markdown(f"""
             <div class="custom-card">
                 <h4>📊 معلومات الملف</h4>
                 <p><strong>✅ تم تحميل الملف بنجاح</strong></p>
                 <p>عدد الصفوف: <strong>{len(df):,}</strong></p>
                 <p>عدد الأعمدة: <strong>{len(df.columns)}</strong></p>
-                <p>الحقول المتاحة: <strong>{', '.join(df.columns[:3])}{'...' if len(df.columns) > 3 else ''}</strong></p>
             </div>
             """, unsafe_allow_html=True)
             
-            # علامات التبويب للتحليل
-            tab1, tab2, tab3 = st.tabs(["📋 عينة البيانات", "📊 الإحصائيات", "📈 الرسوم البيانية"])
+            tab1, tab2 = st.tabs(["📋 عرض البيانات", "📊 الإحصائيات"])
             
             with tab1:
                 st.dataframe(df.head(10), use_container_width=True)
@@ -455,125 +462,63 @@ def build_analysis_section():
             with tab2:
                 st.write("### الإحصائيات الوصفية")
                 st.dataframe(df.describe(), use_container_width=True)
-                
-                # معلومات إضافية
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("القيم المفقودة", df.isnull().sum().sum())
-                with col2:
-                    st.metric("القيم المكررة", df.duplicated().sum())
-                with col3:
-                    st.metric("المساحة المستخدمة", f"{df.memory_usage().sum() / 1024:.1f} KB")
-            
-            with tab3:
-                if len(df.select_dtypes(include=[np.number]).columns) > 1:
-                    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-                    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        x_col = st.selectbox("اختر المحور الأفقي", numeric_cols)
-                    with col2:
-                        y_col = st.selectbox("اختر المحور الرأسي", numeric_cols)
-                    
-                    if st.button("🎨 توليد رسم بياني"):
-                        fig, ax = plt.subplots(figsize=(10, 6))
-                        
-                        if pd.api.types.is_numeric_dtype(df[x_col]) and pd.api.types.is_numeric_dtype(df[y_col]):
-                            ax.scatter(df[x_col], df[y_col], color=DesignConfig.COLORS['petroleum'], alpha=0.7)
-                            ax.set_xlabel(x_col)
-                            ax.set_ylabel(y_col)
-                            ax.set_title(f'العلاقة بين {x_col} و {y_col}')
-                        else:
-                            st.warning("يرجى اختيار أعمدة رقمية للرسم البياني")
-                        
-                        st.pyplot(fig)
-                else:
-                    st.warning("لا توجد أعمدة رقمية كافية لإنشاء رسم بياني")
         
         except Exception as e:
-            st.error(f"❌ حدث خطأ في تحليل الملف: {str(e)}")
+            st.error(f"❌ حدث خطأ: {str(e)}")
 
-def build_gallery_section():
-    """بناء قسم المعرض"""
-    st.markdown('<h2 class="section-title">📋 معرض التقارير والتحليلات</h2>', unsafe_allow_html=True)
+def show_reports_page():
+    """صفحة التقارير"""
+    st.markdown('<h2 style="color: #004d4d; border-bottom: 2px solid #D4AF37; padding-bottom: 10px;">📋 التقارير والتحليلات</h2>', unsafe_allow_html=True)
     
-    # التحقق من وجود مجلد الصور
     if os.path.exists("images") and os.listdir("images"):
-        image_files = [
-            f for f in os.listdir("images") 
-            if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))
-        ]
+        image_files = [f for f in os.listdir("images") if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
         
         if image_files:
-            st.write(f"### عدد الصور المتاحة: {len(image_files)}")
-            
-            # عرض الصور في شبكة
             cols = st.columns(3)
-            for idx, img_file in enumerate(image_files[:9]):  # عرض أول 9 صور
+            for idx, img_file in enumerate(image_files[:6]):
                 with cols[idx % 3]:
                     img_path = os.path.join("images", img_file)
                     try:
                         st.image(img_path, caption=img_file, use_column_width=True)
                     except:
-                        st.error(f"تعذر تحميل الصورة: {img_file}")
+                        st.error(f"تعذر تحميل: {img_file}")
         else:
-            st.info("لا توجد صور في مجلد الصور")
+            st.info("📭 لا توجد صور متاحة")
     else:
-        st.info("📁 مجلد الصور غير موجود أو فارغ")
-
-def build_footer():
-    """بناء الفوتر"""
-    st.markdown("""
-    <div class="footer">
-        <div style="margin: 20px 0;">
-            <p style="font-size: 1.1em; margin-bottom: 10px;">
-            نظام التنبؤ الذكي بأداء الطلاب
-            </p>
-            <p style="opacity: 0.8; font-size: 0.9em;">
-            © 2024 جميع الحقوق محفوظة | الإصدار 2.0 | تم التطوير باستخدام Streamlit
-            </p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        st.info("📁 مجلد الصور غير موجود")
 
 # ============================================================================
-# 5. دوال النظام الأساسية
+# 7. دالة التنبؤ
 # ============================================================================
-def predict_score(hours, attendance, prev_scores, tutoring, peer_influence):
+def predict_score(hours, attendance, prev_scores, tutoring):
     """دالة التنبؤ بالدرجة"""
     try:
         # تحميل النموذج
         model = joblib.load('regression_model.pkl')
         
-        # إعداد البيانات
-        input_data = [[hours, attendance, prev_scores, tutoring, peer_influence]]
+        # إعداد البيانات (باستخدام قيم افتراضية للمتغيرات الناقصة)
+        input_data = [[hours, attendance, prev_scores, tutoring, 3]]  # 3 هو قيمة افتراضية لتأثير الأقران
+        
         score = round(model.predict(input_data)[0], 2)
         score = max(0, min(100, score))
         
         # تحديد التصنيف
         if score >= 90:
-            color, feedback, grade = DesignConfig.COLORS['success'], "أداء استثنائي - مستوى متميز", "ممتاز"
+            color, feedback, grade = DesignConfig.COLORS['success'], "أداء استثنائي", "ممتاز"
         elif score >= 75:
-            color, feedback, grade = DesignConfig.COLORS['info'], "أداء جيد جداً - يواصل التقدم", "جيد جداً"
+            color, feedback, grade = DesignConfig.COLORS['info'], "أداء جيد جداً", "جيد جداً"
         elif score >= 60:
-            color, feedback, grade = DesignConfig.COLORS['warning'], "أداء مقبول - يحتاج إلى تحسين", "مقبول"
+            color, feedback, grade = DesignConfig.COLORS['warning'], "أداء مقبول", "مقبول"
         else:
-            color, feedback, grade = DesignConfig.COLORS['danger'], "أداء ضعيف - يحتاج إلى دعم", "ضعيف"
+            color, feedback, grade = DesignConfig.COLORS['danger'], "أداء ضعيف", "ضعيف"
         
-        # حفظ النتيجة في session state
+        # حفظ النتيجة
         st.session_state.prediction_result = {
             'score': score,
             'color': color,
             'feedback': feedback,
             'grade': grade
         }
-        
-        # حفظ المدخلات في session state
-        st.session_state.hours = hours
-        st.session_state.attendance = attendance
-        st.session_state.prev_scores = prev_scores
-        st.session_state.tutoring = tutoring
-        st.session_state.peer_influence = peer_influence
         
         return True
         
@@ -582,195 +527,53 @@ def predict_score(hours, attendance, prev_scores, tutoring, peer_influence):
         return False
 
 # ============================================================================
-# 6. التنقل في التطبيق
-# ============================================================================
-def create_navigation():
-    """إنشاء شريط التنقل"""
-    st.sidebar.markdown(f"""
-    <div style="text-align: center; padding: 20px; 
-         background: linear-gradient(135deg, {DesignConfig.COLORS['petroleum_dark']} 0%, {DesignConfig.COLORS['petroleum']} 100%);
-         border-radius: {DesignConfig.BORDER_RADIUS['large']}; color: white; margin-bottom: 20px;">
-        <h3 style="margin: 0;">🎓</h3>
-        <p style="margin: 10px 0 0 0; font-size: 0.9em;">نظام التنبؤ الذكي</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # اختيار القسم
-    section = st.sidebar.radio(
-        "🔍 التنقل في النظام",
-        ["🏠 الرئيسية", "🎯 أداة التنبؤ", "📈 تحليل البيانات", "📋 التقارير", "⚙️ الإعدادات"],
-        index=0
-    )
-    
-    # معلومات إضافية في الشريط الجانبي
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### 📊 إحصائيات سريعة")
-    col1, col2 = st.sidebar.columns(2)
-    with col1:
-        st.metric("الدقة", "92%")
-    with col2:
-        st.metric("التحليلات", "150+")
-    
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### 📝 معلومات النظام")
-    st.sidebar.info("""
-    **الإصدار:** 3.0  
-    **آخر تحديث:** 2024  
-    **التقنية:** Streamlit + ML
-    """)
-    
-    return section
-
-# ============================================================================
-# 7. الصفحة الرئيسية
-# ============================================================================
-def show_home_page():
-    """عرض الصفحة الرئيسية"""
-    st.markdown("""
-    <div class="custom-card">
-        <h2>🏠 نظرة عامة على النظام</h2>
-        <p>يقدم هذا النظام حلولاً متكاملة للتنبؤ بالأداء الأكاديمي للطلاب باستخدام تقنيات متقدمة في تحليل البيانات والتعلم الآلي.</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # عرض المميزات في بطاقات
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown(f"""
-        <div class="custom-card">
-            <h4>🎯 التنبؤ الدقيق</h4>
-            <p>استخدام نماذج تنبؤية متقدمة بدقة تصل إلى 92%</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown(f"""
-        <div class="custom-card">
-            <h4>📈 تحليل شامل</h4>
-            <p>تقارير تفصيلية مع رسوم بيانية متعددة</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown(f"""
-        <div class="custom-card">
-            <h4>🎨 واجهة سهلة</h4>
-            <p>تصميم بديهي يسهل على المستخدم التفاعل</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown(f"""
-        <div class="custom-card">
-            <h4>⚡ نتائج آنية</h4>
-            <p>معالجة فورية وإظهار النتائج فوراً</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # كيفية الاستخدام
-    st.markdown(f"""
-    <div class="custom-card">
-        <h3>📖 كيفية الاستخدام</h3>
-        <ol style="padding-right: 20px;">
-            <li>اختر "أداة التنبؤ" من القائمة الجانبية</li>
-            <li>أدخل بيانات الطالب في الحقول المتاحة</li>
-            <li>اضغط على "بدء التنبؤ" للحصول على النتائج</li>
-            <li>استعرض النتائج والتوصيات في الأقسام المختلفة</li>
-        </ol>
-    </div>
-    """, unsafe_allow_html=True)
-
-def show_settings_page():
-    """عرض صفحة الإعدادات"""
-    st.markdown('<h2 class="section-title">⚙️ إعدادات النظام</h2>', unsafe_allow_html=True)
-    
-    # إعدادات النموذج
-    with st.expander("🛠️ إعدادات النموذج"):
-        model_type = st.selectbox("نوع النموذج", ["انحدار خطي", "شجرة قرار", "غابة عشوائية"])
-        confidence_threshold = st.slider("حد الثقة (%)", 50, 99, 85)
-        
-        if st.button("💾 حفظ الإعدادات"):
-            st.success("تم حفظ الإعدادات بنجاح!")
-    
-    # إعدادات الواجهة
-    with st.expander("🎨 إعدادات الواجهة"):
-        theme = st.selectbox("السمة", ["بترولي وذهبي", "فاتح", "غامق"])
-        language = st.selectbox("اللغة", ["العربية", "الإنجليزية"])
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            notifications = st.checkbox("التنبيهات", value=True)
-        with col2:
-            auto_save = st.checkbox("الحفظ التلقائي", value=True)
-    
-    # معلومات النظام
-    with st.expander("📊 معلومات النظام"):
-        st.write(f"**مسار النموذج:** {os.path.abspath('regression_model.pkl')}")
-        st.write(f"**المساحة المتاحة:** {Path('.').stat().st_size / 1024:.1f} KB")
-        st.write(f"**آخر تحديث:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-
-# ============================================================================
 # 8. التطبيق الرئيسي
 # ============================================================================
 def main():
-    """الدالة الرئيسية للتطبيق"""
-    
+    """الدالة الرئيسية"""
     # إعداد الصفحة
     setup_page_config()
     apply_custom_css()
     
-    # شريط التنقل الجانبي
-    section = create_navigation()
-    
-    # الهيدر الرئيسي
+    # الهيدر
     build_header()
     
-    # عرض القسم المحدد
+    # التنقل
+    section = create_navigation()
+    
+    # عرض الصفحة المحددة
     if section == "🏠 الرئيسية":
         show_home_page()
     
     elif section == "🎯 أداة التنبؤ":
-        # الحصول على المدخلات
-        hours, attendance, tutoring, prev_scores, peer_influence, predict_clicked = build_prediction_section()
+        hours, attendance, prev_scores, tutoring, predict_clicked = show_prediction_page()
         
-        # معالجة التنبؤ
         if predict_clicked:
-            with st.spinner("🔍 جاري تحليل البيانات والتنبؤ..."):
-                success = predict_score(hours, attendance, prev_scores, tutoring, peer_influence)
-                if success:
-                    st.success("✅ تم إكمال التنبؤ بنجاح!")
-                    st.rerun()
+            with st.spinner("🔍 جاري تحليل البيانات..."):
+                predict_score(hours, attendance, prev_scores, tutoring)
+                st.rerun()
     
     elif section == "📈 تحليل البيانات":
-        build_analysis_section()
+        show_analysis_page()
     
     elif section == "📋 التقارير":
-        build_gallery_section()
-    
-    elif section == "⚙️ الإعدادات":
-        show_settings_page()
+        show_reports_page()
     
     # الفوتر
-    build_footer()
+    st.markdown("""
+    <div class="footer">
+        <p>نظام التنبؤ الذكي بأداء الطلاب © 2024</p>
+        <p>تم التطوير باستخدام Streamlit</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ============================================================================
-# 9. نقطة الدخول الرئيسية
+# 9. بدء التشغيل
 # ============================================================================
 if __name__ == "__main__":
-    # التحقق من وجود الملفات المطلوبة
-    required_files = ["regression_model.pkl"]
-    
+    # التحقق من وجود الملفات
     if not os.path.exists("regression_model.pkl"):
-        st.warning("⚠️ ملف النموذج غير موجود! سيتم استخدام قيم افتراضية للعرض.")
-        # يمكنك هنا إنشاء نموذج افتراضي للعرض التوضيحي
-        from sklearn.linear_model import LinearRegression
-        import numpy as np
-        
-        # إنشاء نموذج افتراضي
-        X = np.random.rand(100, 5) * 100
-        y = X[:, 0] * 0.3 + X[:, 1] * 0.2 + X[:, 2] * 0.25 + X[:, 3] * 0.15 + X[:, 4] * 0.1 + np.random.randn(100) * 5
-        model = LinearRegression()
-        model.fit(X, y)
-        joblib.dump(model, 'regression_model.pkl')
+        st.warning("⚠️ ملف النموذج غير موجود")
     
     # تشغيل التطبيق
     main()
